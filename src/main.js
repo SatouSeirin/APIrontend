@@ -5,7 +5,7 @@ import App from './App.vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import router from './router'
-import 'virtual:windi.css'
+//import 'virtual:windi.css'
 
 // 创建 Pinia 实例
 const pinia = createPinia()
@@ -18,6 +18,8 @@ app.use(ElementPlus)  // 3. 最后注册 UI 组件库
 
 
 import "./permission"
+
+import "nprogress/nprogress"
 
 // 只挂载一次！
 app.mount('#app')

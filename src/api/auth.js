@@ -6,3 +6,12 @@ export function login(username,password){
     password
     })
 }
+
+export function register(username,email,password){
+  return  axios.post("/api/auth/register",{
+    username,
+    email,
+    password
+    })
+}
+

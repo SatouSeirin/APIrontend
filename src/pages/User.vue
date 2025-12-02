@@ -5,6 +5,7 @@
       <el-card class="stat-card" v-for="(item, index) in stats" :key="index">
         <div class="card-header">
           <span>{{ item.label }}</span>
+          <!-- ⬆️ 图标拉大到 36px -->
           <el-icon :size="36" style="color: #999;">
             <component :is="item.icon" />
           </el-icon>
@@ -13,65 +14,77 @@
       </el-card>
     </div>
 
-
+    <div class="bottom-section">
+ <div class="left-panel">
+        <el-card>
+          <div class="activity-header">API密钥</div>
+          <div class="activity-content">
+            <el-icon :size="28" style="color: #e74c3c; margin-right: 10px;">
+              <Key />
+            </el-icon>
+            <span>你的API密钥：</span>
+            <span>{{ userStore.userInfo.apiKey }}</span>
+          </div>
+        </el-card>
+      </div>
+    </div>
 
     <!-- 底部左右布局 -->
     <div class="bottom-section">
       <!-- 左侧：动态信息栏 -->
       <div class="left-panel">
         <el-card>
-          <div class="activity-header">动态</div>
+          <div class="activity-header">日志</div>
           <div class="activity-content">
             <el-icon :size="28" style="color: #e74c3c; margin-right: 10px;">
-              <WarningFilled />
+              <Bell />
             </el-icon>
-            <span>暂无新动态</span>
+            <span>暂无日志</span>
           </div>
         </el-card>
       </div>
 
-      <!-- 右侧：更新 / 模块 / 寄语 -->
-      <div class="right-panel">
-        <el-card>
-          <div class="sidebar-item">
-            <h4>更新</h4>
-            <p>暂时没有更新</p>
-            <span class="update-time">2022-7-21</span>
-          </div>
-          <div class="sidebar-item">
-            <h4>任意发挥的模块</h4>
-            <p>啥也没有</p>
-          </div>
-          <div class="sidebar-item">
-            <h4>寄语</h4>
-            <p class="quote">
-              原想将澎湃的爱平平稳稳放置你手心，奈何我徒有一股蛮劲，
-              只顾向你跑去，一个不稳跌的满身脏兮兮。
-              试图爬起的我，心想你会不会笑我“献殷勤”的这样笨拙，
-              怎么不知避开爱里的埋伏。
-            </p>
-          </div>
-        </el-card>
-      </div>
+
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, onBeforeUnmount, nextTick } from 'vue'
+import { onMounted, ref ,computed } from 'vue';
+import { Key, Bell, Coin,Document } from '@element-plus/icons-vue'
+import { useUserStore } from '~/store/index'
 
-import { WarningFilled } from '@element-plus/icons-vue'
+const userStore = useUserStore()
+const chartRef = ref(null);
 
-// 数据卡片（修复重复项）
-const stats = [
-  { label: 'API总数', value: '5.00', icon: 'Document' },
-  { label: 'API总访问量', value: '6075.00', icon: 'Truck' },
-  { label: '正常API数量', value: '5.00', icon: 'Delete' },
-  { label: '异常API数量', value: '0', icon: 'Mouse' }
-]
-
-
-const chartReady = ref(false)
+// 数据卡片（4个）
+// 使用计算属性动态构建 stats 数组
+const stats = computed(() => [
+  { 
+    label: '剩余调用API额度', 
+    value: userStore.userInfo.totalQuota ?? 'N/A', // 请根据您的 userInfo 实际结构替换字段名
+    icon: Coin
+  },
+  { 
+    label: '总调用API次数', 
+    value: userStore.userInfo?.usedQuota ?? 'N/A', 
+    icon: Document
+  },
+  { 
+    label: '用户权限', 
+    value: userStore.userInfo?.role === 0 ? '用户' : 
+           userStore.userInfo?.role === 1 ? '管理员' : 'N/A',
+    icon: 'Truck' 
+  },
+ { 
+    label: '账户状态', 
+    value: userStore.userInfo?.status === 1 ? '正常' :
+           userStore.userInfo?.status === 0 ? '禁用' : 'N/A',// 使用store中的getter
+    icon: 'Truck' 
+  }
+  // 您可以添加更多卡片...
+]);
 
 
 </script>
@@ -115,7 +128,6 @@ const chartReady = ref(false)
   color: #409EFF; /* 可以设置一个主题色 */
 }
 
-
 .chart-section {
   margin-bottom: 20px;
 }
@@ -128,6 +140,7 @@ const chartReady = ref(false)
 .bottom-section {
   display: flex;
   gap: 20px;
+    padding: 5px;
 }
 
 .left-panel {

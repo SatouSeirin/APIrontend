@@ -3,7 +3,7 @@ import { toast } from './composables/util'
 import { getToken } from './composables/auth'
 
 const service = axios.create({
-    baseURL:"http://127.0.0.1:8080"
+    //baseURL:"http://127.0.0.:8080"
 })
 
 // 添加请求拦截器

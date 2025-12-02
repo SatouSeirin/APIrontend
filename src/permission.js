@@ -1,29 +1,38 @@
 import { getToken } from "./composables/auth"
-import { toast } from "./composables/util"
+import { toast , showFullLoading, hideFullLoading} from "./composables/util"
 import router from "./router/index"
 
 //全局前置守卫
 
+// 全局前置守卫
 router.beforeEach(async (to, from, next) => {
+  showFullLoading()
 
-const token = getToken()
+  // ✅ 定义无需登录的页面白名单
+  const whiteList = ['/login', '/register'] // ← 添加 /register
 
-if(!token && to.path != "/login"){
-    toast("请先登录","error")
-    return next({path:"/login"})
-}
+  const token = getToken()
 
-//防止重复登录  
-if(token && to.path == "/login"){
-    toast("请勿重复登录","error")
-    return next({ path:from.path ? from.path : "/" })
-}
+  // ✅ 如果在白名单中，直接放行
+  if (whiteList.includes(to.path)) {
+    next()
+    return
+  }
 
-//如果用户 登录了，自动获取用户信息，并存储在pinia当中
+  // 如果没有 token 且不在白名单 → 跳转登录
+  if (!token) {
+    toast("请先登录", "error")
+    return next({ path: "/login" })
+  }
 
-  // 正确的：在守卫回调内部使用 Store
+  // 防止重复登录
+  if (token && to.path === "/login") {
+    toast("请勿重复登录", "error")
+    return next({ path: from.path || "/" })
+  }
+
+  // 自动获取用户信息（已有 token 且不在白名单）
   if (token) {
-    // 在这里导入和使用 Store
     const { useUserStore } = await import('./store/index')
     const userStore = useUserStore()
     
@@ -37,14 +46,18 @@ if(token && to.path == "/login"){
         }
       } catch (error) {
         console.error('自动获取用户信息失败:', error)
-        // 处理 token 过期等情况
+        // 可选：清除无效 token
         // removeToken()
-        // return next({path: "/login"})
+        // return next({ path: "/login" })
       }
     }
   }
 
-
+  // 设置页面标题
+  let title = (to.meta.title || "") + "-Api对接平台"
+  document.title = title
 
   next()
 })
+  //全局后置守卫
+router.afterEach((to, from)=> hideFullLoading())

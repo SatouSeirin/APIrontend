@@ -1,31 +1,55 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Index from '../pages/index.vue'
-import Login from '../pages/login.vue'
 import NotFound from '../pages/404.vue'
 import Dashboard from '../pages/dashboard.vue'
-
+import Admin from '../layouts/admin.vue'
+import AuthLayout from '../pages/auth/AuthLayout.vue'
+import User from '../pages/User.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'index',
-      component: Index,
+      component: Admin,
+      //子路由
+      children:[{
+        path:'',
+        component:Index,
+        name: 'Index',
+        meta:{
+          title:"后台首页"
+        }
+      },
+      {
+        path:'user',
+        component:User,
+        name: 'User',
+        meta:{
+          title:"个人信息"
+        }
+      },
+    ]
     },
     {
       path: '/login',
       name: 'login',
-      component: Login,
+      component: AuthLayout,
+            meta:{
+        title:"登录"
+      }
     },
-    { path: '/:pathMatch(.*)*', 
-      name: 'NotFound', 
-      component: NotFound,
+    {
+      path: '/register',
+    redirect: '/login'
     },
     { 
-      path: '/dashboard',
-      name: 'dashboard',
-      component: Dashboard,
+      path: '/:pathMatch(.*)*', 
+      name: 'NotFound', 
+      component: NotFound,
+            meta:{
+        title:"404啦"
+      }
     }
   ],
 })
