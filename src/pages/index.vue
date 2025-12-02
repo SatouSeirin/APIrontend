@@ -38,7 +38,7 @@
           </p>
           <div class="card-footer">
             <span class="category">{{ api.apiCategory }}</span>
-            <span class="version">v{{ api.version }}</span>
+            <span class="version">{{ api.version }}</span>
           </div>
         </div>
 
@@ -49,15 +49,18 @@
       </div>
     </div>
 
-    <!-- 详情弹窗 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="detail.apiName || 'API 详情'"
-      width="520px"
-      append-to-body
-      class="api-detail-dialog"
-    >
-      <div class="detail-content" v-if="detail.id">
+<!-- 详情弹窗 -->
+<el-dialog
+  v-model="dialogVisible"
+  :title="detail.apiName || 'API 详情'"
+  width="900px" 
+  append-to-body
+  class="api-detail-dialog"
+>
+  <div class="detail-layout" v-if="detail.id">
+    <!-- 左侧：基本信息 -->
+    <div class="detail-left">
+      <div class="detail-content">
         <div class="detail-item">
           <label>唯一标识</label>
           <span>{{ detail.apiIdentifier }}</span>
@@ -117,15 +120,28 @@
           <span>{{ detail.creatorId }}</span>
         </div>
       </div>
-      <template #footer>
-        <el-button @click="dialogVisible = false">关闭</el-button>
-      </template>
-    </el-dialog>
+    </div>
+
+    <!-- 右侧：响应示例 -->
+    <div class="detail-right" v-if="showResponse">
+      <div class="response-header">
+        <h4>返回示例</h4>
+        <el-button size="small" @click="copyResponse">复制</el-button>
+      </div>
+      <pre class="response-body"><code>{{ formattedResponse }}</code></pre>
+    </div>
+  </div>
+
+  <template #footer>
+    <el-button @click="toggleResponse">{{ showResponse ? '隐藏响应' : '调用示例' }}</el-button>
+    <el-button @click="dialogVisible = false">关闭</el-button>
+  </template>
+</el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import dayjs from 'dayjs';
 import { getAllApis } from '../api/apis';
 
@@ -134,6 +150,7 @@ const apiList = ref([]);
 const loading = ref(false);
 const dialogVisible = ref(false);
 const detail = ref({});
+const showResponse = ref(false);
 
 const METHOD_MAP = {
   '0': 'GET',
@@ -161,7 +178,16 @@ const transformApi = (raw) => {
     status: raw.status ? 'active' : 'inactive', // true → 'active'
     createTime: raw.createdAt,                // createdAt → createTime
     updateTime: raw.updatedAt,
-    creatorId: raw.createdBy
+    creatorId: raw.createdBy,
+    // 👇 假设后端返回 responseExample 字段（字符串或对象）
+    responseExample: raw.responseExample || {
+      code: 200,
+      message: "success",
+      data: {
+        ip: "127.0.0.1",
+        timestamp: "2025-12-02T21:30:00Z"
+      }
+    }
   };
 };
 
@@ -173,7 +199,7 @@ const fetchApiList = async () => {
 
     // res.data 是 { success, message, data: [...] }
     const rawApis = res.data || [];
-    //console.log('原始数据:', res.data);
+    console.log('原始数据:', res.data);
     apiList.value = rawApis.map(transformApi);
     //console.log('转换后的数据:', apiList.value); // 临时加日志确认
   } catch (error) {
@@ -197,6 +223,31 @@ const openDetail = async (api) => {
   } catch (error) {
     console.error('加载详情失败', error);
   }
+};
+
+
+// 格式化 JSON（用于展示）
+const formattedResponse = computed(() => {
+  if (!detail.value.responseExample) return '{}';
+  try {
+    const obj = typeof detail.value.responseExample === 'string'
+      ? JSON.parse(detail.value.responseExample)
+      : detail.value.responseExample;
+    return JSON.stringify(obj, null, 2);
+  } catch (e) {
+    return detail.value.responseExample; // 原样返回
+  }
+});
+
+// 切换响应区域
+const toggleResponse = () => {
+  showResponse.value = !showResponse.value;
+};
+
+// 复制响应
+const copyResponse = async () => {
+  await navigator.clipboard.writeText(formattedResponse.value);
+  ElMessage.success('已复制到剪贴板');
 };
 
 // ===== 轮播广告数据（使用有效图片）=====
@@ -390,5 +441,47 @@ onMounted(() => {
 
 .api-detail-dialog :deep(.el-dialog__body) {
   padding: 20px 24px;
+}
+
+/* 弹窗内左右布局 */
+.detail-layout {
+  display: flex;
+  gap: 20px;
+  max-height: 60vh;
+}
+
+.detail-left {
+  flex: 1;
+}
+
+.detail-right {
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #eee;
+  padding-left: 20px;
+}
+
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.response-body {
+  background: #282c34;
+  color: #abb2bf;
+  padding: 16px;
+  border-radius: 6px;
+  overflow: auto;
+  flex: 1;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.response-body code {
+  white-space: pre;
 }
 </style>
