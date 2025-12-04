@@ -5,7 +5,6 @@
       <el-card class="stat-card" v-for="(item, index) in stats" :key="index">
         <div class="card-header">
           <span>{{ item.label }}</span>
-          <!-- ⬆️ 图标拉大到 36px -->
           <el-icon :size="36" style="color: #999;">
             <component :is="item.icon" />
           </el-icon>
@@ -14,8 +13,9 @@
       </el-card>
     </div>
 
+    <!-- API密钥卡片 -->
     <div class="bottom-section">
- <div class="left-panel">
+      <div class="left-panel">
         <el-card>
           <div class="activity-header">API密钥</div>
           <div class="activity-content">
@@ -29,41 +29,130 @@
       </div>
     </div>
 
-    <!-- 底部左右布局 -->
-    <div class="bottom-section">
-      <!-- 左侧：动态信息栏 -->
-      <div class="left-panel">
-        <el-card>
-          <div class="activity-header">日志</div>
-          <div class="activity-content">
-            <el-icon :size="28" style="color: #e74c3c; margin-right: 10px;">
-              <Bell />
-            </el-icon>
-            <span>暂无日志</span>
-          </div>
-        </el-card>
+    <!-- 日志卡片 -->
+<!-- 在 "底部左右布局" 区域 -->
+<div class="bottom-section">
+  <div class="left-panel">
+    <el-card>
+      <div class="activity-header">API 调用日志</div>
+      
+      <!-- 加载中 -->
+      <div v-if="loading" class="log-loading">
+        <el-icon :size="20"><Loading /></el-icon>
+        <span>加载中...</span>
       </div>
 
+      <!-- 无日志 -->
+      <div v-else-if="logs.length === 0" class="activity-content">
+        <el-icon :size="28" style="color: #999; margin-right: 10px;">
+          <Bell />
+        </el-icon>
+        <span>暂无调用记录</span>
+      </div>
 
+      <!-- 有日志 -->
+      <div v-else>
+        <div 
+          v-for="log in logs" 
+          :key="log.id"
+          class="log-item"
+        >
+          <div class="log-method" :class="`method-${log.requestMethod}`">
+            {{ log.requestMethod }}
+          </div>
+          <div class="log-info">
+            <div class="log-url">{{ log.requestUrl }}</div>
+            <div class="log-meta">
+              <span>状态: <b>{{ log.responseStatus }}</b></span>
+              <span>耗时: {{ log.latency }}ms</span>
+              <span>IP: {{ log.ipAddress }}</span>
+              <span>{{ formatDate(log.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
 
-    </div>
+        <!-- 分页 -->
+        <el-pagination
+          v-if="total > pageSize"
+          class="log-pagination"
+          background
+          layout="prev, pager, next"
+          :total="total"
+          :page-size="pageSize"
+          v-model:current-page="currentPage"
+          @current-change="fetchLogs"
+        />
+      </div>
+    </el-card>
+  </div>
+</div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref ,computed } from 'vue';
-import { Key, Bell, Coin,Document } from '@element-plus/icons-vue'
-import { useUserStore } from '~/store/index'
+import { onMounted, ref, computed } from 'vue';
+import { Key, Bell, Coin, Document, Loading } from '@element-plus/icons-vue';
+import { useUserStore } from '~/store/index';
+import { getApiLogs } from '~/api/apis'; // ← 使用你的封装
+import axios from "~/axios"; // 确保这是标准 axios 实例
+const userStore = useUserStore();
 
-const userStore = useUserStore()
-const chartRef = ref(null);
+// ============= 日志相关 =============
+const logs = ref([]);
+const loading = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
-// 数据卡片（4个）
-// 使用计算属性动态构建 stats 数组
+// 分页方法（无默认值！）
+// const fetchLogs = async (page) => {
+// console.log("📥 发送页码到后端:", page - 1); // 点击第2页时应输出 1
+
+//   loading.value = true;
+//   try {
+//     const res = await getApiLogs({
+//       params: {
+//         page: page - 1, // 转为 0-based
+//         size: pageSize.value
+//       }
+//     });
+//     logs.value = res.data.logs || [];
+//     total.value = res.data.total || 0;
+//   } catch (error) {
+//     console.error('加载日志失败:', error);
+//     logs.value = [];
+//   } finally {
+//     loading.value = false;
+//   }
+// };
+
+const fetchLogs = async (page) => {
+  const res = await getApiLogs({
+    page: page - 1,      // 0-based
+    size: pageSize.value
+  });
+  logs.value = res.data.logs;
+  total.value = res.data.total;
+};
+
+// ============= 工具函数 =============
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  const date = new Date(dateStr);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// ============= 原有 stats =============
 const stats = computed(() => [
   { 
     label: '剩余调用API额度', 
-    value: userStore.userInfo.totalQuota ?? 'N/A', // 请根据您的 userInfo 实际结构替换字段名
+    value: userStore.userInfo.totalQuota ?? 'N/A',
     icon: Coin
   },
   { 
@@ -77,42 +166,101 @@ const stats = computed(() => [
            userStore.userInfo?.role === 1 ? '管理员' : 'N/A',
     icon: 'Truck' 
   },
- { 
+  { 
     label: '账户状态', 
     value: userStore.userInfo?.status === 1 ? '正常' :
-           userStore.userInfo?.status === 0 ? '禁用' : 'N/A',// 使用store中的getter
+           userStore.userInfo?.status === 0 ? '禁用' : 'N/A',
     icon: 'Truck' 
   }
-  // 您可以添加更多卡片...
 ]);
 
-
+// ============= 生命周期 =============
+// 初始加载
+onMounted(() => {
+  fetchLogs(1); // ← 明确传第一页
+});
 </script>
 
 <style scoped>
-/* ✅ 关键：去掉滚动条 */
+/* ===== 日志样式 ===== */
+.log-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #999;
+}
+
+.log-item {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.log-item:last-child {
+  border-bottom: none;
+}
+
+.log-method {
+  width: 60px;
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  margin-right: 12px;
+}
+
+.method-GET { background-color: #409EFF; }
+.method-POST { background-color: #67C23A; }
+.method-PUT { background-color: #E6A23C; }
+.method-DELETE { background-color: #F56C6C; }
+
+.log-info {
+  flex: 1;
+}
+
+.log-url {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.log-meta {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.log-pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* ===== 保留原有样式 ===== */
 .dashboard-subpage {
   padding: 20px;
   background: #f5f7fa;
   min-height: 100%;
-  overflow: hidden; /* ⬅️ 隐藏滚动条 */
+  overflow: hidden;
 }
 
-/* 确保卡片容器本身是Flex布局并支持换行，同时整体居中 */
 .card-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center; /* 这会使一行中的卡片组整体居中 */
-  gap: 10px; /* 设置卡片之间的间距 */
+  justify-content: center;
+  gap: 10px;
 }
 
-/* 设置每个卡片的固定宽度 */
 .stat-card {
-    flex: 1;
-   min-width: 200px /* 或者您喜欢的任何宽度 */
+  flex: 1;
+  min-width: 200px;
 }
 
-/* 卡片头部样式：标签和图标分居两侧，垂直居中 */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -120,35 +268,21 @@ const stats = computed(() => [
   margin-bottom: 10px;
 }
 
-/* 卡片数值显示样式 */
 .card-value {
   text-align: center;
   font-size: 2em;
   font-weight: bold;
-  color: #409EFF; /* 可以设置一个主题色 */
-}
-
-.chart-section {
-  margin-bottom: 20px;
-}
-
-.chart-container {
-  height: 280px;
-  width: 100%;
+  color: #409EFF;
 }
 
 .bottom-section {
   display: flex;
   gap: 20px;
-    padding: 5px;
+  padding: 5px;
 }
 
 .left-panel {
   flex: 1;
-}
-
-.right-panel {
-  width: 300px;
 }
 
 .activity-header {
@@ -164,33 +298,5 @@ const stats = computed(() => [
   align-items: center;
   font-size: 14px;
   color: #666;
-}
-
-.sidebar-item {
-  margin-bottom: 20px;
-}
-
-.sidebar-item h4 {
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.sidebar-item p {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-}
-
-.update-time {
-  font-size: 12px;
-  color: #999;
-  float: right;
-}
-
-.quote {
-  font-style: italic;
-  color: #555;
-  line-height: 1.8;
 }
 </style>

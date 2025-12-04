@@ -42,116 +42,122 @@
           </div>
         </div>
 
-        <!-- 空状态 -->
         <div v-if="apiList.length === 0 && !loading" class="empty-state">
           暂无可用 API
         </div>
       </div>
     </div>
 
-<!-- 详情弹窗 -->
-<el-dialog
-  v-model="dialogVisible"
-  :title="detail.apiName || 'API 详情'"
-  width="900px" 
-  append-to-body
-  class="api-detail-dialog"
->
-  <div class="detail-layout" v-if="detail.id">
-    <!-- 左侧：基本信息 -->
-    <div class="detail-left">
-      <div class="detail-content">
-        <div class="detail-item">
-          <label>唯一标识</label>
-          <span>{{ detail.apiIdentifier }}</span>
+    <!-- 详情弹窗 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="detail.apiName || 'API 详情'"
+      width="900px"
+      append-to-body
+      class="api-detail-dialog"
+    >
+      <div class="detail-layout" v-if="detail.id">
+        <!-- 左侧：基本信息 -->
+        <div class="detail-left">
+          <div class="detail-content">
+            <div class="detail-item">
+              <label>唯一标识</label>
+              <span>{{ detail.apiIdentifier }}</span>
+            </div>
+            <div class="detail-item">
+              <label>功能描述</label>
+              <span>{{ detail.description || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>请求路径</label>
+              <span class="code">{{ detail.breakpointPath }}</span>
+            </div>
+            <div class="detail-item">
+              <label>请求方法</label>
+              <el-tag size="small" :type="getMethodTagType(detail.method)">
+                {{ detail.method }}
+              </el-tag>
+            </div>
+            <div class="detail-item">
+              <label>后端地址</label>
+              <span class="code">{{ detail.backendUrl }}</span>
+            </div>
+            <div class="detail-item">
+              <label>分类</label>
+              <span>{{ detail.apiCategory }}</span>
+            </div>
+            <div class="detail-item">
+              <label>版本</label>
+              <span>{{ detail.version }}</span>
+            </div>
+            <div class="detail-item">
+              <label>是否公开</label>
+              <el-tag size="small" :type="detail.isPublic ? 'success' : 'info'">
+                {{ detail.isPublic ? '是' : '否' }}
+              </el-tag>
+            </div>
+            <div class="detail-item">
+              <label>频率限制</label>
+              <span>{{ detail.rateLimit || '无限制' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>状态</label>
+              <el-tag size="small" :type="getTagType(detail.status)">
+                {{ detail.status === 'active' ? '正常' : '异常' }}
+              </el-tag>
+            </div>
+            <div class="detail-item">
+              <label>创建时间</label>
+              <span>{{ formatDate(detail.createTime) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>更新时间</label>
+              <span>{{ formatDate(detail.updateTime) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>创建者</label>
+              <span>{{ detail.creatorId }}</span>
+            </div>
+          </div>
         </div>
-        <div class="detail-item">
-          <label>功能描述</label>
-          <span>{{ detail.description || '—' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>请求路径</label>
-          <span class="code">{{ detail.breakpointPath }}</span>
-        </div>
-        <div class="detail-item">
-          <label>请求方法</label>
-          <el-tag size="small" :type="getMethodTagType(detail.method)">
-            {{ detail.method }}
-          </el-tag>
-        </div>
-        <div class="detail-item">
-          <label>后端地址</label>
-          <span class="code">{{ detail.backendUrl }}</span>
-        </div>
-        <div class="detail-item">
-          <label>分类</label>
-          <span>{{ detail.apiCategory }}</span>
-        </div>
-        <div class="detail-item">
-          <label>版本</label>
-          <span>{{ detail.version }}</span>
-        </div>
-        <div class="detail-item">
-          <label>是否公开</label>
-          <el-tag size="small" :type="detail.isPublic ? 'success' : 'info'">
-            {{ detail.isPublic ? '是' : '否' }}
-          </el-tag>
-        </div>
-        <div class="detail-item">
-          <label>频率限制</label>
-          <span>{{ detail.rateLimit || '无限制' }}</span>
-        </div>
-        <div class="detail-item">
-          <label>状态</label>
-          <el-tag size="small" :type="getTagType(detail.status)">
-            {{ detail.status === 'active' ? '正常' : '异常' }}
-          </el-tag>
-        </div>
-        <div class="detail-item">
-          <label>创建时间</label>
-          <span>{{ formatDate(detail.createTime) }}</span>
-        </div>
-        <div class="detail-item">
-          <label>更新时间</label>
-          <span>{{ formatDate(detail.updateTime) }}</span>
-        </div>
-        <div class="detail-item">
-          <label>创建者</label>
-          <span>{{ detail.creatorId }}</span>
+
+        <!-- 右侧：示例区域 -->
+        <div class="detail-right" v-if="showExample">
+          <div class="response-header">
+            <h4>{{ exampleType === 'request' ? 'Curl 请求示例' : '返回示例' }}</h4>
+            <el-button size="small" @click="copyExample">
+              {{ exampleType === 'request' ? '复制 Curl' : '复制响应' }}
+            </el-button>
+          </div>
+          <pre class="response-body"><code>{{ currentExample }}</code></pre>
         </div>
       </div>
-    </div>
 
-    <!-- 右侧：响应示例 -->
-    <div class="detail-right" v-if="showResponse">
-      <div class="response-header">
-        <h4>返回示例</h4>
-        <el-button size="small" @click="copyResponse">复制</el-button>
-      </div>
-      <pre class="response-body"><code>{{ formattedResponse }}</code></pre>
-    </div>
-  </div>
-
-  <template #footer>
-    <el-button @click="toggleResponse">{{ showResponse ? '隐藏响应' : '调用示例' }}</el-button>
-    <el-button @click="dialogVisible = false">关闭</el-button>
-  </template>
-</el-dialog>
+      <template #footer>
+        <el-button @click="showRequestExample">Curl 示例</el-button>
+        <el-button @click="showResponseExample">返回示例</el-button>
+        <el-button v-if="showExample" @click="showExample = false">隐藏示例</el-button>
+        <el-button @click="dialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed } from 'vue';
 import dayjs from 'dayjs';
+import { ElMessage } from 'element-plus';
 import { getAllApis } from '../api/apis';
 
-// ===== API 列表状态 =====
+// ===== 状态定义 =====
 const apiList = ref([]);
 const loading = ref(false);
 const dialogVisible = ref(false);
 const detail = ref({});
-const showResponse = ref(false);
+const showExample = ref(false);
+const exampleType = ref('response'); // 'request' | 'response'
 
+// ===== 方法映射 =====
 const METHOD_MAP = {
   '0': 'GET',
   '1': 'POST',
@@ -162,6 +168,7 @@ const METHOD_MAP = {
   '6': 'HEAD'
 };
 
+// ===== 数据转换函数 =====
 const transformApi = (raw) => {
   return {
     id: raw.id,
@@ -169,39 +176,31 @@ const transformApi = (raw) => {
     apiName: raw.name,
     description: raw.description,
     breakpointPath: raw.endpoint,
-    method: METHOD_MAP[raw.method] || 'GET', // 将 "0" → "GET"
-    backendUrl: raw.upstreamUrl,              // upstreamUrl → backendUrl
+    method: METHOD_MAP[raw.method] || 'GET',
+    backendUrl: raw.upstreamUrl,
     apiCategory: raw.category || '未分类',
     version: raw.version,
-    isPublic: raw.isPublic,                   // 已是 boolean，直接用
-    rateLimit: `${raw.rateLimit}/分钟`,       // 1 → "1/分钟"
-    status: raw.status ? 'active' : 'inactive', // true → 'active'
-    createTime: raw.createdAt,                // createdAt → createTime
+    isPublic: raw.isPublic,
+    rateLimit: raw.rateLimit ? `${raw.rateLimit}/分钟` : '无限制',
+    status: raw.status ? 'active' : 'inactive',
+    createTime: raw.createdAt,
     updateTime: raw.updatedAt,
     creatorId: raw.createdBy,
-    // 👇 假设后端返回 responseExample 字段（字符串或对象）
-    responseExample: raw.responseExample || {
-      code: 200,
-      message: "success",
-      data: {
-        ip: "127.0.0.1",
-        timestamp: "2025-12-02T21:30:00Z"
-      }
-    }
+    // 👇 直接使用后端存储的完整 curl 命令字符串
+    curlExample: raw.curlExample || '',
+    // 返回示例
+    responseExample: raw.responseExample || '{}'
   };
 };
 
-
+// ===== 获取 API 列表 =====
 const fetchApiList = async () => {
   loading.value = true;
   try {
     const res = await getAllApis();
-
-    // res.data 是 { success, message, data: [...] }
+    console.log(res);
     const rawApis = res.data || [];
-    console.log('原始数据:', res.data);
     apiList.value = rawApis.map(transformApi);
-    //console.log('转换后的数据:', apiList.value); // 临时加日志确认
   } catch (error) {
     console.error('加载 API 列表失败', error);
     apiList.value = [];
@@ -210,64 +209,46 @@ const fetchApiList = async () => {
   }
 };
 
-// 详情也做同样转换（如果你有详情接口）
-const openDetail = async (api) => {
-  try {
-    // 如果你有详情接口，比如 /api/apis/1
-    // const res = await getApiDetail(api.id);
-    // detail.value = transformApi(res.data.data);
-
-    // 如果没有详情接口，直接用列表中的数据
-    detail.value = { ...api };
-    dialogVisible.value = true;
-  } catch (error) {
-    console.error('加载详情失败', error);
-  }
+// ===== 打开详情弹窗 =====
+const openDetail = (api) => {
+  detail.value = { ...api };
+  dialogVisible.value = true;
+  showExample.value = false; // 初始隐藏示例区域
 };
 
-
-// 格式化 JSON（用于展示）
-const formattedResponse = computed(() => {
-  if (!detail.value.responseExample) return '{}';
-  try {
-    const obj = typeof detail.value.responseExample === 'string'
-      ? JSON.parse(detail.value.responseExample)
-      : detail.value.responseExample;
-    return JSON.stringify(obj, null, 2);
-  } catch (e) {
-    return detail.value.responseExample; // 原样返回
+// ===== 当前显示的示例内容 =====
+const currentExample = computed(() => {
+  if (exampleType.value === 'request') {
+    return detail.value.curlExample || '# 未提供 Curl 请求示例';
+  } else {
+    const example = detail.value.responseExample;
+    if (!example) return '{}';
+    try {
+      const obj = typeof example === 'string' ? JSON.parse(example) : example;
+      return JSON.stringify(obj, null, 2);
+    } catch (e) {
+      return String(example);
+    }
   }
 });
 
-// 切换响应区域
-const toggleResponse = () => {
-  showResponse.value = !showResponse.value;
+// ===== 按钮事件 =====
+const showRequestExample = () => {
+  exampleType.value = 'request';
+  showExample.value = true;
 };
 
-// 复制响应
-const copyResponse = async () => {
-  await navigator.clipboard.writeText(formattedResponse.value);
+const showResponseExample = () => {
+  exampleType.value = 'response';
+  showExample.value = true;
+};
+
+const copyExample = async () => {
+  await navigator.clipboard.writeText(currentExample.value);
   ElMessage.success('已复制到剪贴板');
 };
 
-// ===== 轮播广告数据（使用有效图片）=====
-const banners = ref([
-  {
-    image: 'https://picsum.photos/1200/240?random=1',
-    title: '全新 API 开放平台上线',
-    description: '高效、稳定、安全的 API 服务，助力开发者快速集成'
-  },
-  {
-    image: 'https://picsum.photos/1200/240?random=2',
-    title: '新用户享 10,000 次免费调用',
-    description: '立即注册，体验高性能 API 服务'
-  }
-]);
-
-
-
-
-// 工具函数
+// ===== 工具函数 =====
 const formatDate = (date) => {
   return date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—';
 };
@@ -286,9 +267,22 @@ const getMethodTagType = (method) => {
   return map[method] || 'info';
 };
 
-onMounted(() => {
-  fetchApiList();
-});
+// ===== 轮播图数据 =====
+const banners = ref([
+  {
+    image: 'https://youke1.picui.cn/s1/2025/12/03/693050209b946.jpg',
+    title: '全新 API 开放平台上线',
+    description: '高效、稳定、安全的 API 服务，助力开发者快速集成'
+  },
+  {
+    image: 'https://youke1.picui.cn/s1/2025/12/03/693050225ebd9.png',
+    title: '新用户享 10,000 次免费调用',
+    description: '立即注册，体验高性能 API 服务'
+  }
+]);
+
+// ===== 初始化 =====
+fetchApiList();
 </script>
 
 <style scoped>
@@ -345,7 +339,6 @@ onMounted(() => {
   gap: 24px;
   max-width: 1400px;
   margin: 0 auto;
-  
 }
 
 .api-card {
@@ -358,7 +351,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 180px;
-  justify-items: center;
 }
 
 .api-card:hover {
@@ -443,7 +435,6 @@ onMounted(() => {
   padding: 20px 24px;
 }
 
-/* 弹窗内左右布局 */
 .detail-layout {
   display: flex;
   gap: 20px;
