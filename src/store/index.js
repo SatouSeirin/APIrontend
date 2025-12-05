@@ -19,6 +19,9 @@ export const useUserStore = defineStore('user', {
     async fetchUserInfo() {
       try {
         const res = await userinfo() // 调用API
+
+
+        console.log(res.data)
         if (res && res.data) {
           this.SET_USERINFO(res.data) // 调用已有的SET_USERINFO
           return Promise.resolve(res.data) // 返回数据，便于后续使用

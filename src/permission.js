@@ -9,9 +9,10 @@ router.beforeEach(async (to, from, next) => {
   showFullLoading()
 
   // ✅ 定义无需登录的页面白名单
-  const whiteList = ['/login', '/register'] // ← 添加 /register
+  const whiteList = ['/auth/login', '/auth/register', '/'] // ← 添加首页 '/' 为公开页面！
 
   const token = getToken()
+
 
   // ✅ 如果在白名单中，直接放行
   if (whiteList.includes(to.path)) {
@@ -22,11 +23,11 @@ router.beforeEach(async (to, from, next) => {
   // 如果没有 token 且不在白名单 → 跳转登录
   if (!token) {
     toast("请先登录", "error")
-    return next({ path: "/login" })
+    return next({ path: "/auth/login" }) // ✅ 修正路径
   }
 
   // 防止重复登录
-  if (token && to.path === "/login") {
+  if (token && to.path === "/auth/login") {
     toast("请勿重复登录", "error")
     return next({ path: from.path || "/" })
   }
@@ -35,7 +36,8 @@ router.beforeEach(async (to, from, next) => {
   if (token) {
     const { useUserStore } = await import('./store/index')
     const userStore = useUserStore()
-    
+    console.log("userStore"+userStore)
+
     if (!userStore.userInfo) {
       try {
         const { userinfo } = await import('./api/user')

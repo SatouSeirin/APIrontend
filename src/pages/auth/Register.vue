@@ -11,7 +11,6 @@
           placeholder="用户名（6-13位字母数字）"
           size="large"
           :prefix-icon="User"
-          clearable
         />
       </el-form-item>
 
@@ -21,7 +20,6 @@
           placeholder="邮箱"
           size="large"
           :prefix-icon="Message"
-          clearable
         />
       </el-form-item>
 
@@ -33,7 +31,6 @@
           size="large"
           :prefix-icon="Lock"
           show-password
-          clearable
         />
       </el-form-item>
 
@@ -45,7 +42,6 @@
           size="large"
           :prefix-icon="Lock"
           show-password
-          clearable
         />
       </el-form-item>
 
@@ -71,12 +67,6 @@ import { ref, reactive } from 'vue'
 import { User, Lock, Message } from '@element-plus/icons-vue'
 import { register } from '../../api/auth'
 import { toast } from '../../composables/util'
-import router from '../../router'
-
-
-const props = defineProps({
-  isLogin: { type: Boolean, default: false }
-})
 
 const emit = defineEmits(['toggle'])
 
@@ -122,93 +112,84 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
     
-    const res = await register(form.username,form.email, form.password)
+    const res = await register(form.username, form.email, form.password)
     toast(res.message || '注册成功！')
     
-        // 清空表单（可选）
-    form.username = ''
-    form.email = ''
-    form.password = ''
-    form.confirmPassword = ''
-
-        // 切换到登录模式
+    // 注册成功后自动切换到登录
     emit('toggle')
     
   } finally {
     loading.value = false
   }
 }
-
 </script>
 
-<!-- 样式与 Login.vue 完全相同，可提取为公共样式 -->
+<!-- 样式与 Login.vue 完全一致 -->
 <style scoped>
 .auth-form {
-  color: white;
+  color: #1f2937;
 }
 
 .form-title {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 8px;
   text-align: center;
 }
 
 .form-subtitle {
   text-align: center;
-  opacity: 0.9;
-  margin-bottom: 30px;
+  color: #6b7280;
+  margin-bottom: 24px;
 }
 
 :deep(.el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  color: white;
+  height: 48px;
 }
 
 :deep(.el-input__inner) {
-  color: white;
+  color: #1f2937;
 }
 
-:deep(.el-input__wrapper.is-focus) {
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+:deep(.el-input__prefix) {
+  color: #9ca3af;
 }
 
 .submit-btn {
   width: 100%;
   height: 48px;
-  margin-top: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-top: 16px;
+  background: #4f6cf9;
+  border: none;
   border-radius: 12px;
   color: white;
   font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s;
+  font-weight: 600;
+  transition: background 0.3s;
 }
 
 .submit-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.submit-btn:active {
-  transform: translateY(0);
+  background: #435ce0;
 }
 
 .switch-link {
   text-align: center;
   margin-top: 20px;
-  opacity: 0.9;
+  color: #6b7280;
 }
 
 .switch-link a {
-  color: white;
-  font-weight: 500;
+  color: #4f6cf9;
+  font-weight: 600;
   margin-left: 4px;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.switch-link a:hover {
   text-decoration: underline;
 }
 </style>

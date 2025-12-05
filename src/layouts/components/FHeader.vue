@@ -41,7 +41,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 
-//console.log(userStore.userInfo.username)
+console.log(userStore.userInfo.username)
 
 defineProps({
   isCollapse: Boolean
@@ -64,7 +64,7 @@ showModal("是否要推出登录？").then(res=>{
     userStore.CLEAR_USERINFO();
 
     // 5. 跳转到登录页
-    router.push('/login');
+     router.push({ name: 'Login' });
 
     
     toast("退出成功","success");

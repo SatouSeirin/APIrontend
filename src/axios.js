@@ -37,6 +37,7 @@ service.interceptors.request.use(function (config) {
     // 在发送请求之前做些什么
     // 往header头装token
     const token = getToken()
+
     if(token){
         config.headers["Authorization"] = `Bearer ${token}`
     }

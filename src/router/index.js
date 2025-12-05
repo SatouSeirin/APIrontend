@@ -1,69 +1,106 @@
+// src/router/index.js
 import { createRouter, createWebHashHistory } from 'vue-router'
+
+// Views (对外页面)
+import Home from '../views/Home.vue'
+import ApiList from '../views/ApiList.vue'
+
+// Pages (后台页面)
 import Index from '../pages/index.vue'
 import NotFound from '../pages/404.vue'
-import Dashboard from '../pages/dashboard.vue'
-import Admin from '../layouts/admin.vue'
+import Admin from '../layouts/Admin.vue'
 import AuthLayout from '../pages/auth/AuthLayout.vue'
 import User from '../pages/User.vue'
+import Profile from '../views/Profile.vue'
+import Settings from '../pages/Settings.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
+    // 🌐 公开首页
     {
       path: '/',
-      component: Admin,
-      //子路由
-      children:[{
-        path:'',
-        component:Index,
-        name: 'Index',
-        meta:{
-          title:"后台首页"
-        }
-      },
+      name: 'Home',
+      component: Home,
+      meta: { title: '甜蜜接口API平台' }
+    },
+
+    // 🔍 API 列表（需登录，但由守卫控制，不设 meta.requiresAuth）
+    {
+      path: '/apis',
+      name: 'ApiList',
+      component: ApiList,
+      meta: { title: 'API 接口大全' }
+    },
       {
-        path:'user',
-        component:User,
-        name: 'User',
-        meta:{
-          title:"个人信息"
-        }
-      },
-    ]
-    },
+          path: '/profile',
+          name: 'Profile',
+          component: Profile,
+          meta: { title: '个人中心' }
+        },
+
+    // 🔐 认证页面
     {
-      path: '/login',
-      name: 'login',
+      path: '/auth',
       component: AuthLayout,
-            meta:{
-        title:"登录"
-      }
+      children: [
+        {
+          path: 'login',
+          name: 'Login',
+          component: () => import('../pages/auth/Login.vue'),
+          meta: { title: '登录' }
+        },
+        {
+          path: 'register',
+          name: 'Register',
+          component: () => import('../pages/auth/Register.vue'),
+          meta: { title: '注册' }
+        }
+      ]
     },
+
+    // 🖥️ 后台管理（需登录）
     {
-      path: '/register',
-    redirect: '/login'
+      path: '/admin',
+      component: Admin,
+      meta: { requiresAuth: true }, // 可选，守卫已统一处理
+      children: [
+        {
+          path: '',
+          name: 'AdminDashboard',
+          component: Index,
+          meta: { title: '后台首页' }
+        },
+        {
+          path: 'user',
+          name: 'User',
+          component: User,
+          meta: { title: '用户信息' }
+        },
+        {
+          path: 'settings',
+          name: 'Settings',
+          component: Settings,
+          meta: { title: '系统设置' }
+        }
+      ]
     },
-    { 
-      path: '/:pathMatch(.*)*', 
-      name: 'NotFound', 
+
+    // 🚫 404
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
       component: NotFound,
-            meta:{
-        title:"404啦"
-      }
+      meta: { title: '404 - 页面未找到' }
     }
-  ],
+  ]
 })
 
-// 重写 push 方法
+// 防重复导航
 const originalPush = router.push
-router.push = function push (location) {
-  // 调用原始的 push 方法，并捕获错误，忽略导航重复错误
+router.push = function push(location) {
   return originalPush.call(this, location).catch(err => {
-    if (err.name !== 'NavigationDuplicated') {
-      // 可以重新抛出非“导航重复”的错误
-      throw err
-    }
-    // 对于导航重复错误，静默处理
+    if (err.name !== 'NavigationDuplicated') throw err
   })
 }
 
