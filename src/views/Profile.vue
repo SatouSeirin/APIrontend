@@ -128,7 +128,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { Key, Bell, Loading, Coin, Document } from '@element-plus/icons-vue'
 import { useUserStore } from '~/store/index'
-import { getApiLogs } from '~/api/apis'
+import { getApiLogs,getUserTotalCalls } from '~/api/apis'
 import AppHeader from '../components/AppHeader.vue'
 
 const userStore = useUserStore()
@@ -141,7 +141,7 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-
+const userTotalCalls = ref(0);
 
 
 // ===== 新增：搜索状态 =====
@@ -196,6 +196,19 @@ const fetchLogs = async (page = 1) => {
   }
 }
 
+// 在 fetchLogs 附近添加
+const fetchUserTotalCalls = async () => {
+  try {
+    const res = await getUserTotalCalls();
+    console.log(res)
+    userTotalCalls.value = res.data || 0;
+  } catch (error) {
+    console.error('获取用户调用次数失败:', error);
+    userTotalCalls.value = 0;
+  }
+};
+
+
 // ===== 搜索和重置 =====
 const handleSearch = () => {
   fetchLogs(1) // 重置到第一页
@@ -230,8 +243,8 @@ const stats = computed(() => [
     icon: Coin
   },
   {
-    label: '总调用次数',
-    value: userStore.userInfo?.usedQuota ?? '—',
+    label: '用户调用总数',
+    value: userTotalCalls.value || '—', // ← 关键修改
     icon: Document
   },
   {
@@ -251,6 +264,8 @@ const stats = computed(() => [
 
 // === 初始化 ===
 onMounted(() => {
+
+  fetchUserTotalCalls();
   fetchLogs(1)
 })
 </script>

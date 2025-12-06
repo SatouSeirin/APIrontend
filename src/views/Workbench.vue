@@ -7,6 +7,16 @@
     <div class="container">
       <h1 class="section-title">API 工作台</h1>
 
+
+            <!-- API 密钥卡片 -->
+      <div class="api-key-card">
+        <div class="card-title">API 密钥</div>
+        <div class="key-content">
+          <el-icon :size="20" class="key-icon"><Key /></el-icon>
+          <span class="key-text">{{ userStore.userInfo.apiKey || '—' }}</span>
+        </div>
+      </div>
+
       <!-- 请求配置区 -->
       <el-card class="request-card">
         <div class="request-header">
@@ -120,12 +130,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 import AppHeader from '../components/AppHeader.vue'
-
+import { useUserStore } from '~/store/index'
+import { Key} from '@element-plus/icons-vue'
 
 // ========== 状态 ==========
 const method = ref('GET')
 const url = ref('')
 const activeTab = ref('params')
+const userStore = useUserStore()
 
 // 请求参数
 const params = ref([])
@@ -309,5 +321,41 @@ const formatResponse = (data) => {
 
 .response-body code {
   white-space: pre;
+}
+
+/* ========== API 密钥卡片 ========== */
+.api-key-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.key-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.key-icon {
+  color: #4f6cf9;
+}
+
+.key-text {
+  font-family: 'Consolas', monospace;
+  font-size: 14px;
+  color: #374151;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border-radius: 6px;
 }
 </style>

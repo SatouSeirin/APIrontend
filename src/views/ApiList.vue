@@ -191,18 +191,15 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '~/store/index'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
-import { getAllApis } from '../api/apis'
+import { getAllApis, getApisTotal } from '../api/apis'
 import { toast } from '../composables/util'
 import AppHeader from '../components/AppHeader.vue'
 import { DataAnalysis, Lock, Lightning, Document } from '@element-plus/icons-vue'
-const icons = { DataAnalysis, Lock, Lightning, Document }
 
-// === 状态 ===
-const router = useRouter()
+// === 状态（必须先声明）===
 const userStore = useUserStore()
-
-// === API 列表状态 ===
 const apiList = ref([])
+const totalCalls = ref(0) // 总调用次数
 const loading = ref(false)
 const dialogVisible = ref(false)
 const detail = ref({})
@@ -257,6 +254,17 @@ const fetchApiList = async () => {
   }
 }
 
+// === 获取总调用次数 ===
+const fetchTotalCalls = async () => {
+  try {
+    const res = await getApisTotal()
+    totalCalls.value = res.data || 0
+  } catch (error) {
+    console.error('获取总调用次数失败', error)
+    totalCalls.value = 0
+  }
+}
+
 // === 详情弹窗 ===
 const openDetail = (api) => {
   detail.value = { ...api }
@@ -264,32 +272,32 @@ const openDetail = (api) => {
   showExample.value = false
 }
 
-
-// 在 fetchApiList 后计算统计
+// ✅ 修复：stats 计算属性（关键！）
 const stats = computed(() => {
-  const list = apiList.value;
-  const totalApis = list.length;
-  const activeApis = list.filter(api => api.status === 'active').length;
-  const inactiveApis = totalApis - activeApis;
+  const list = apiList.value
+  const totalApis = list.length // API 总数 = 列表长度
+  const activeApis = list.filter(api => api.status === 'active').length
+  const inactiveApis = totalApis - activeApis
   
-  // ⚠️ 注意：totalCalls 需要从后端获取！
-  // 如果后端没提供，可先 mock 或留空
-  const totalCalls = userStore.userInfo?.usedQuota ?? 0; // 假设用户额度=调用次数
+  // 使用 totalCalls ref 的值
+  const totalCallCount = totalCalls.value
 
   return {
     totalApis,
-    totalCalls,
+    totalCalls: totalCallCount, // 避免变量名冲突
     activeApis,
     inactiveApis
-  };
-});
+  }
+})
 
-// 数字格式化（1000 → 1,000）
+// ✅ 修复：安全的数字格式化
 const formatNumber = (num) => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
+  if (num == null || num === '') return '0'
+  const number = typeof num === 'string' ? parseFloat(num) : num
+  return isNaN(number) ? '0' : number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
 
-
+// === 其他方法（保持不变）===
 const currentExample = computed(() => {
   if (exampleType.value === 'request') {
     return detail.value.curlExample || '# 未提供 Curl 请求示例'
@@ -342,6 +350,7 @@ const getMethodTagType = (method) => {
 // === 初始化 ===
 onMounted(() => {
   fetchApiList()
+  fetchTotalCalls()
 })
 </script>
 
