@@ -38,6 +38,42 @@
       <div class="logs-section">
         <div class="card-title">API 调用日志</div>
 
+        <!-- ========== 新增：搜索表单 ========== -->
+  <div class="log-search">
+    <el-form :model="searchForm" inline>
+      <el-form-item label="时间范围">
+        <el-date-picker
+          v-model="searchForm.dateRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          :shortcuts="shortcuts"
+        />
+      </el-form-item>
+
+      <el-form-item label="状态码" class="status-select-item">
+        <el-select v-model="searchForm.status" placeholder="全部" clearable popper-class="status-select-popper">
+          <el-option label="2xx" value="2" />
+          <el-option label="4xx" value="4" />
+          <el-option label="5xx" value="5" />
+          <el-option :label="code" :value="code" v-for="code in [200, 400, 401, 403, 404, 500]" :key="code" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="URL">
+        <el-input v-model="searchForm.url" placeholder="关键词" clearable />
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleReset">重置</el-button>
+      </el-form-item>
+    </el-form>
+  </div>
+
         <!-- 加载中 -->
         <div v-if="loading" class="log-placeholder">
           <el-icon :size="20"><Loading /></el-icon>
@@ -97,6 +133,8 @@ import AppHeader from '../components/AppHeader.vue'
 
 const userStore = useUserStore()
 
+
+
 // === 日志状态 ===
 const logs = ref([])
 const loading = ref(false)
@@ -104,21 +142,72 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-const fetchLogs = async (page) => {
+
+
+// ===== 新增：搜索状态 =====
+const searchForm = ref({
+  dateRange: [],
+  status: '',
+  url: ''
+})
+
+// 快捷时间选项
+const shortcuts = [
+  { text: '最近1小时', value: () => [new Date(Date.now() - 3600 * 1000), new Date()] },
+  { text: '最近6小时', value: () => [new Date(Date.now() - 6 * 3600 * 1000), new Date()] },
+  { text: '最近24小时', value: () => [new Date(Date.now() - 24 * 3600 * 1000), new Date()] }
+]
+
+// ===== 修改 fetchLogs =====
+const fetchLogs = async (page = 1) => {
   loading.value = true
   try {
-    const res = await getApiLogs({
+    // 构建查询参数
+    const params = {
       page: page - 1,
       size: pageSize.value
-    })
+    }
+
+    // 时间范围
+    if (searchForm.value.dateRange && searchForm.value.dateRange.length === 2) {
+      params.startTime = searchForm.value.dateRange[0]
+      params.endTime = searchForm.value.dateRange[1]
+    }
+
+    // 状态码
+    if (searchForm.value.status) {
+      params.status = searchForm.value.status
+    }
+
+    // URL 关键词
+    if (searchForm.value.url) {
+      params.url = searchForm.value.url
+    }
+
+    const res = await getApiLogs(params)
     logs.value = res.data.logs || []
     total.value = res.data.total || 0
+    currentPage.value = page
   } catch (error) {
     console.error('加载日志失败:', error)
     logs.value = []
   } finally {
     loading.value = false
   }
+}
+
+// ===== 搜索和重置 =====
+const handleSearch = () => {
+  fetchLogs(1) // 重置到第一页
+}
+
+const handleReset = () => {
+  searchForm.value = {
+    dateRange: [],
+    status: '',
+    url: ''
+  }
+  fetchLogs(1)
 }
 
 // === 工具函数 ===
@@ -364,6 +453,48 @@ onMounted(() => {
   .log-meta {
     gap: 12px;
     font-size: 11px;
+  }
+}
+
+
+/* ========== 日志搜索 ========== */
+.log-search {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.log-search .el-form {
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.log-search .el-form-item {
+  margin-bottom: 0;
+}
+
+.log-search .el-form-item__label {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* 可选：调整表单项目宽度 */
+.status-select-item {
+  min-width: 130px; /* 确保 label 和 select 有足够空间 */
+}
+
+
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .log-search .el-form {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .log-search .el-form-item {
+    width: 100%;
   }
 }
 </style>

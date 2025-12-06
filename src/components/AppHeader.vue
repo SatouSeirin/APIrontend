@@ -4,9 +4,10 @@
     <div class="container">
       <router-link to="/" class="logo">甜蜜接口API</router-link>
       <nav class="nav-links">
-        <a href="/#features">功能</a>
-        <a href="/#examples">示例</a>
-        <a href="/pricing">定价</a>
+        <a href="/#">首页</a>
+        <a href="/#apis">API列表</a>
+        <a href="/#rechargeCenter">充值中心</a>
+        <a href="/#workbench">工作台</a>
         <template v-if="!isLoggedIn">
           <el-button type="primary" size="small" @click="handleLogin">登录</el-button>
           <el-button size="small" @click="handleRegister">注册</el-button>

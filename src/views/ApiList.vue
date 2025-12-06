@@ -4,8 +4,64 @@
     <!-- 顶部导航 -->
     <AppHeader />
 
+
+    
+
     <!-- 主内容区 -->
     <div class="container">
+
+<!-- ========== 数据概览卡片 ========== -->
+<div class="stats-cards">
+
+  <el-card class="stat-card">
+    <div class="stat-content">
+      <div class="stat-icon">
+        <el-icon><Document /></el-icon>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ stats.totalApis }}</div>
+        <div class="stat-label">API 总数</div>
+      </div>
+    </div>
+  </el-card>
+
+  <el-card class="stat-card">
+    <div class="stat-content">
+      <div class="stat-icon">
+        <el-icon><DataAnalysis /></el-icon>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ formatNumber(stats.totalCalls) }}</div>
+        <div class="stat-label">总调用次数</div>
+      </div>
+    </div>
+  </el-card>
+
+  <el-card class="stat-card">
+    <div class="stat-content">
+      <div class="stat-icon success">
+        <el-icon><Lock /></el-icon>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ stats.activeApis }}</div>
+        <div class="stat-label">正常 API</div>
+      </div>
+    </div>
+  </el-card>
+
+  <el-card class="stat-card">
+    <div class="stat-content">
+      <div class="stat-icon danger">
+        <el-icon><Lightning /></el-icon>
+      </div>
+      <div class="stat-info">
+        <div class="stat-value">{{ stats.inactiveApis }}</div>
+        <div class="stat-label">异常 API</div>
+      </div>
+    </div>
+  </el-card>
+</div>
+
       <h1 class="section-title">可用 API 接口</h1>
       <div class="api-cards">
         <div
@@ -207,6 +263,32 @@ const openDetail = (api) => {
   dialogVisible.value = true
   showExample.value = false
 }
+
+
+// 在 fetchApiList 后计算统计
+const stats = computed(() => {
+  const list = apiList.value;
+  const totalApis = list.length;
+  const activeApis = list.filter(api => api.status === 'active').length;
+  const inactiveApis = totalApis - activeApis;
+  
+  // ⚠️ 注意：totalCalls 需要从后端获取！
+  // 如果后端没提供，可先 mock 或留空
+  const totalCalls = userStore.userInfo?.usedQuota ?? 0; // 假设用户额度=调用次数
+
+  return {
+    totalApis,
+    totalCalls,
+    activeApis,
+    inactiveApis
+  };
+});
+
+// 数字格式化（1000 → 1,000）
+const formatNumber = (num) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
 
 const currentExample = computed(() => {
   if (exampleType.value === 'request') {
@@ -454,5 +536,70 @@ onMounted(() => {
   .api-card {
     padding: 20px;
   }
+}
+
+
+/* ========== 数据概览卡片 ========== */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.stat-icon.success {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.stat-icon.danger {
+  background-color: #fef2f2;
+  colorful: #dc2626;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 4px;
 }
 </style>

@@ -13,6 +13,8 @@ import AuthLayout from '../pages/auth/AuthLayout.vue'
 import User from '../pages/User.vue'
 import Profile from '../views/Profile.vue'
 import Settings from '../pages/Settings.vue'
+import Workbench from '../views/Workbench.vue'
+import RechargeCenter from '../views/RechargeCenter.vue'
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -32,12 +34,24 @@ const router = createRouter({
       component: ApiList,
       meta: { title: 'API 接口大全' }
     },
-      {
+    {
           path: '/profile',
           name: 'Profile',
           component: Profile,
           meta: { title: '个人中心' }
-        },
+      },
+        {
+          path: '/workbench',
+          name: 'Workbench',
+          component: Workbench,
+          meta: { title: '工作台' }
+      },
+        {
+          path: '/rechargeCenter',
+          name: 'RechargeCenter',
+          component: RechargeCenter,
+          meta: { title: '工作台' }
+      },
 
     // 🔐 认证页面
     {
