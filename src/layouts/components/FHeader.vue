@@ -7,7 +7,7 @@
         <Fold v-if="!isCollapse" />
         <Expand v-else />
       </el-icon>
-      <span class="header-title">甜蜜接口API平台</span>
+      <span class="header-title">接口API平台</span>
     </div>
 
     <!-- 右侧：用户信息（右上角） -->

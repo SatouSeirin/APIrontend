@@ -13,10 +13,6 @@
           <div class="quota-label">剩余调用额度</div>
           <div class="quota-value">{{ formatNumber(userStore.userInfo.totalQuota) }} 次</div>
         </div>
-        <div class="quota-item">
-          <div class="quota-label">历史总调用</div>
-          <div class="quota-value">{{ formatNumber(userStore.userInfo.usedQuota) }} 次</div>
-        </div>
       </el-card>
 
       <!-- 充值套餐 -->
@@ -68,31 +64,83 @@
       </div>
     </div>
 
-    <!-- 支付结果弹窗 -->
+    <!-- 🔹 充值确认弹窗 -->
+    <el-dialog
+      v-model="showConfirmDialog"
+      title="🔔 确认充值"
+      width="360px"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="true"
+    >
+      <div class="confirm-content">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="充值套餐">
+            {{ confirmInfo.packageName }}
+          </el-descriptions-item>
+          <el-descriptions-item label="获得额度">
+            <span class="highlight-quota">{{ confirmInfo.quota }} 次</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="支付金额">
+            <span class="highlight-price">¥{{ confirmInfo.price }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="支付方式">
+            {{ confirmInfo.paymentMethod }}
+          </el-descriptions-item>
+        </el-descriptions>
+        
+        <el-alert
+          title="温馨提示"
+          type="info"
+          :closable="false"
+          class="confirm-tip"
+          show-icon
+        >
+          充值后额度实时到账，不支持退款，请确认支付
+        </el-alert>
+      </div>
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelRecharge">取消</el-button>
+          <el-button type="primary" :loading="confirmLoading" @click="confirmRecharge">
+            确认支付
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 🔹 支付结果弹窗 -->
     <el-dialog
       v-model="showResultDialog"
-      title="充值成功"
+      title="✅ 充值成功"
       width="300px"
       center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
     >
       <div class="result-content">
         <el-icon class="success-icon"><CircleCheck /></el-icon>
-        <p>已成功充值 {{ selectedPackageQuota }} 次调用额度！</p>
-        <p>当前剩余额度：{{ newTotalQuota }} 次</p>
+        <p>已成功充值 <strong>{{ confirmInfo.quota }}</strong> 次调用额度！</p>
       </div>
       <template #footer>
-        <el-button type="primary" @click="showResultDialog = false">确认</el-button>
+        <el-button type="primary" @click="onConfirmRecharge">确认</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '~/store/index'
 import { ElMessage } from 'element-plus'
 import AppHeader from '../components/AppHeader.vue'
 import { Check, CircleCheck } from '@element-plus/icons-vue'
+import axios from "~/axios"
+import { submitRecharge } from '../api/user'
+
 
 const userStore = useUserStore()
 
@@ -108,7 +156,10 @@ const packages = ref([
 const selectedPackageId = ref(null)
 const paymentMethod = ref('wechat')
 const showResultDialog = ref(false)
+const showConfirmDialog = ref(false)
+const confirmLoading = ref(false)
 const newTotalQuota = ref(0)
+const confirmInfo = ref({})
 
 // ========== 计算属性 ==========
 const selectedPackage = computed(() => {
@@ -123,34 +174,89 @@ const selectedPackageQuota = computed(() => {
   return selectedPackage.value ? selectedPackage.value.quota : 0
 })
 
+// ✅ 用 computed 包装，确保响应式追踪（解决 usedQuota 显示为0的问题）
+const usedQuota = computed(() => userStore.userInfo?.usedQuota ?? 0)
+
 // ========== 方法 ==========
 const selectPackage = (id) => {
   selectedPackageId.value = id
 }
 
 const formatNumber = (num) => {
-  return num ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0'
+  if (num == null) return '0'
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
+// 🔁 点击充值 → 显示确认弹窗
 const handleRecharge = async () => {
   if (!selectedPackageId.value) {
     ElMessage.warning('请先选择充值套餐')
     return
   }
-
-  // 模拟支付成功
-  ElMessage.success('支付成功！额度已充值')
-
-  // 更新额度（模拟）
-  const oldQuota = userStore.userInfo.totalQuota || 0
-  newTotalQuota.value = oldQuota + selectedPackageQuota.value
-
-  // 更新 Store（实际应调用 API）
-  userStore.userInfo.totalQuota = newTotalQuota.value
-
-  // 显示结果弹窗
-  showResultDialog.value = true
+  
+  confirmInfo.value = {
+    packageName: selectedPackage.value.name,
+    price: selectedPackage.value.price,
+    quota: selectedPackage.value.quota,
+    paymentMethod: {
+      wechat: '微信支付',
+      alipay: '支付宝', 
+      unionpay: '银联支付'
+    }[paymentMethod.value]
+  }
+  
+  showConfirmDialog.value = true
 }
+
+// ✅ 确认执行充值
+const confirmRecharge = async () => {
+  if (confirmLoading.value) return  // 防重复点击
+  
+  confirmLoading.value = true
+  
+  try {
+    // 🎭 模拟支付请求延迟（实际开发请替换为真实接口）
+    // ✅ 只提交额度到后端
+    const res = await submitRecharge(confirmInfo.value.quota)
+    
+    // if (!res.data?.success) {
+    //   throw new Error(res.data?.error || '充值失败')
+    // }
+    
+    ElMessage.success('充值成功！额度已到账')
+    
+    // 🎉 切换弹窗
+    showConfirmDialog.value = false
+    showResultDialog.value = true
+    
+  } catch (error) {
+    console.error('充值异常:', error)
+    ElMessage.error(error.response?.data?.error || error.message || '充值失败')
+  } finally {
+    confirmLoading.value = false
+  }
+}
+
+
+const onConfirmRecharge = () => {
+  // 1️⃣ 关闭弹窗
+  showResultDialog.value = false
+  
+  // 2️⃣ 🔄 刷新页面（确保显示最新额度）
+  // 延迟 200ms 确保弹窗关闭动画完成
+  setTimeout(() => {
+    window.location.reload()  // ✅ 刷新整个页面
+  }, 200)
+}
+
+
+// ✅ 取消充值
+const cancelRecharge = () => {
+  showConfirmDialog.value = false
+  ElMessage.info('已取消充值')
+}
+
+
 </script>
 
 <style scoped>
@@ -197,6 +303,12 @@ const handleRecharge = async () => {
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.quota-item:last-child {
+  margin-bottom: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .quota-label {
@@ -290,7 +402,35 @@ const handleRecharge = async () => {
   margin-top: 40px;
 }
 
-/* ========== 结果弹窗 ========== */
+/* ========== 确认弹窗样式 ========== */
+.confirm-content {
+  padding: 8px 4px;
+}
+
+.highlight-quota {
+  color: #409eff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.highlight-price {
+  color: #f56c6c;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.confirm-tip {
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* ========== 结果弹窗样式 ========== */
 .result-content {
   text-align: center;
   padding: 20px 0;
@@ -300,6 +440,17 @@ const handleRecharge = async () => {
   color: #67c23a;
   font-size: 48px;
   margin-bottom: 16px;
+}
+
+.result-content p {
+  margin: 8px 0;
+  color: #606266;
+  font-size: 15px;
+}
+
+.result-content p strong {
+  color: #1f2937;
+  font-weight: 600;
 }
 
 /* ========== 响应式 ========== */
@@ -315,6 +466,10 @@ const handleRecharge = async () => {
 
   .section-title {
     font-size: 24px;
+  }
+  
+  .quota-value {
+    font-size: 20px;
   }
 }
 </style>

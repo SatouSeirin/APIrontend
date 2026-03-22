@@ -10,7 +10,7 @@
     router                               
   >
     <div class="menu-logo">
-      <span v-if="!collapse">甜蜜接口API</span>
+      <span v-if="!collapse">接口API</span>
       <span v-else>API</span>
     </div>
 

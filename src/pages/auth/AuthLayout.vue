@@ -3,7 +3,7 @@
   <div class="auth-layout">
     <div class="glass-container">
       <div class="brand-header">
-        <h1>甜蜜接口API</h1>
+        <h1>接口API</h1>
         <p>简单 · 快速 · 安全的 API 服务</p>
       </div>
 

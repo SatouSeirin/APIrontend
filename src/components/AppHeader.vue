@@ -2,7 +2,7 @@
 <template>
   <header class="app-header">
     <div class="container">
-      <router-link to="/" class="logo">甜蜜接口API</router-link>
+      <router-link to="/" class="logo">接口API</router-link>
       <nav class="nav-links">
         <a href="/#">首页</a>
         <a href="/#apis">API列表</a>

@@ -28,7 +28,7 @@
     <!-- 核心功能 -->
     <section id="features" class="features-section">
       <div class="container">
-        <h2 class="section-title">为什么选择甜蜜接口？</h2>
+        <h2 class="section-title">为什么选择接口API？</h2>
         <div class="features-grid">
           <div class="feature-card">
             <el-icon class="feature-icon">
@@ -86,7 +86,7 @@ print(res.json())</code></pre>
     <!-- 底部 -->
     <footer class="footer">
       <div class="container">
-        <p>© 2025 甜蜜接口API平台. 保留所有权利。</p>
+        <p>© 2025 接口API平台. 保留所有权利。</p>
         <p>
           <router-link to="/privacy">隐私政策</router-link> |
           <router-link to="/terms">服务条款</router-link>
