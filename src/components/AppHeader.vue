@@ -1,4 +1,5 @@
 <!-- src/components/AppHeader.vue -->
+<!-- src/components/AppHeader.vue -->
 <template>
   <header class="app-header">
     <div class="container">
@@ -8,6 +9,7 @@
         <a href="/#apis">API列表</a>
         <a href="/#rechargeCenter">充值中心</a>
         <a href="/#workbench">工作台</a>
+        <a href="/#agreement">用户协议</a> <!-- 添加协议链接 -->
         <template v-if="!isLoggedIn">
           <el-button type="primary" size="small" @click="handleLogin">登录</el-button>
           <el-button size="small" @click="handleRegister">注册</el-button>
@@ -20,7 +22,8 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-              <el-dropdown-item command="console">管理后台</el-dropdown-item>
+              <el-dropdown-item command="developer">开发者后台</el-dropdown-item>
+              <el-dropdown-item command="admin">管理员后台</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -41,26 +44,40 @@ const router = useRouter()
 const userStore = useUserStore()
 const userAvatar = ''
 
-// ✅ 统一登录状态判断（从 Cookie）
+// 统一登录状态判断（从 Cookie）
 const isLoggedIn = computed(() => !!getToken())
 
-// ✅ 统一路由跳转逻辑
+// 统一路由跳转逻辑
 const handleLogin = () => router.push({ name: 'Login' })
 const handleRegister = () => router.push({ name: 'Register' })
 
 const handleUserCommand = (command) => {
   switch (command) {
     case 'profile':
-      router.push('/profile')
+      router.push({ name: 'Profile' })
       break
-    case 'console':
-      router.push('/admin')
+    case 'developer': // 处理开发者后台命令
+      // 可以在这里添加额外的权限检查
+      // if (userStore.userInfo?.role !== 1 && userStore.userInfo?.role !== 2) {
+      //   toast('权限不足', 'error')
+      //   return
+      // }
+      router.push({ name: 'DeveloperConsole' })
+      break
+    case 'admin': // 处理管理员后台命令
+      // if (userStore.userInfo?.role !== 2) {
+      //   toast('权限不足', 'error')
+      //   return
+      // }
+      router.push({ name: 'AdminPanel' })
       break
     case 'logout':
-      removeToken()
       userStore.CLEAR_USERINFO()
+      localStorage.removeItem('token') // 清除本地token
+      router.push({ name: 'Login' })
       toast('已退出登录', 'success')
-      router.push('/')
+      break
+    default:
       break
   }
 }

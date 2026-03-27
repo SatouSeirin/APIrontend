@@ -7,3 +7,7 @@ export function userinfo(){
 export function submitRecharge(quota) {
   return axios.post('/api/user/recharge', { quota });
 }
+
+export function applyToBeDeveloper() {
+  return axios.post('/api/user/updateToDeveloper'); 
+}

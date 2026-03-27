@@ -264,7 +264,7 @@ const cancelRecharge = () => {
 .recharge-page {
   background: #ffffff;
   min-height: 100vh;
-  padding-top: 60px;
+
 }
 
 .container {

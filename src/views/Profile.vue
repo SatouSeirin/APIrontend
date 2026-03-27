@@ -251,7 +251,7 @@ const stats = computed(() => [
     label: '用户权限',
     value: (() => {
       const role = userStore.userInfo?.role
-      return role === 0 ? '普通用户' : role === 1 ? '管理员' : '—'
+      return role === 0 ? '普通用户' : role === 1 ? '开发者' : role === 2 ? '管理员' : '-';
     })(),
     icon: Document // 统一使用 Document，避免 undefined icon
   },
@@ -274,7 +274,7 @@ onMounted(() => {
 .profile-page {
   background: #ffffff; /* 与首页一致 */
   min-height: 100vh;
-  padding-top: 60px; /* 为固定头部留空间 */
+
 }
 
 .container {

@@ -359,7 +359,7 @@ onMounted(() => {
 .api-list-page {
   background: #ffffff; /* 与首页、个人中心一致 */
   min-height: 100vh;
-  padding-top: 60px; /* 为固定头部留空间 */
+
 }
 
 /* ========== 容器 ========== */
