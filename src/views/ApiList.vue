@@ -4,72 +4,141 @@
     <!-- 顶部导航 -->
     <AppHeader />
 
-
-    
-
     <!-- 主内容区 -->
     <div class="container">
+      <h1 class="section-title">接口状态</h1>
+      <!-- ========== 数据概览卡片 ========== -->
+      <div class="stats-cards">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <el-icon><Document /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.totalApis }}</div>
+              <div class="stat-label">API 总数</div>
+            </div>
+          </div>
+        </el-card>
 
-<!-- ========== 数据概览卡片 ========== -->
-<div class="stats-cards">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <el-icon><DataAnalysis /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ formatNumber(stats.totalCalls) }}</div>
+              <div class="stat-label">总调用次数</div>
+            </div>
+          </div>
+        </el-card>
 
-  <el-card class="stat-card">
-    <div class="stat-content">
-      <div class="stat-icon">
-        <el-icon><Document /></el-icon>
-      </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.totalApis }}</div>
-        <div class="stat-label">API 总数</div>
-      </div>
-    </div>
-  </el-card>
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon success">
+              <el-icon><Lock /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.activeApis }}</div>
+              <div class="stat-label">正常 API</div>
+            </div>
+          </div>
+        </el-card>
 
-  <el-card class="stat-card">
-    <div class="stat-content">
-      <div class="stat-icon">
-        <el-icon><DataAnalysis /></el-icon>
-      </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ formatNumber(stats.totalCalls) }}</div>
-        <div class="stat-label">总调用次数</div>
-      </div>
-    </div>
-  </el-card>
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon danger">
+              <el-icon><Lightning /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.inactiveApis }}</div>
+              <div class="stat-label">异常 API</div>
+            </div>
+          </div>
+        </el-card>
 
-  <el-card class="stat-card">
-    <div class="stat-content">
-      <div class="stat-icon success">
-        <el-icon><Lock /></el-icon>
+        <!-- 🔥 待审核API卡片 (现在基于实际数据) -->
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon warning">
+              <el-icon><Document /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ stats.pendingReview }}</div>
+              <div class="stat-label">待审核 API</div>
+            </div>
+          </div>
+        </el-card>
       </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.activeApis }}</div>
-        <div class="stat-label">正常 API</div>
-      </div>
-    </div>
-  </el-card>
 
-  <el-card class="stat-card">
-    <div class="stat-content">
-      <div class="stat-icon danger">
-        <el-icon><Lightning /></el-icon>
-      </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ stats.inactiveApis }}</div>
-        <div class="stat-label">异常 API</div>
-      </div>
-    </div>
-  </el-card>
-</div>
+      <!-- ========== 排行榜图表 ========== -->
+      <h2 class="section-title">排行榜</h2>
+      <div class="rankings-container">
+        <el-card class="ranking-card">
+          <template #header>
+            <div class="card-header">
+              <span>今日调用最多</span>
+            </div>
+          </template>
+          <div v-if="topTodayApis.length === 0" class="no-data">暂无数据</div>
+          <div v-else class="ranking-list">
+            <div
+              v-for="(item, index) in topTodayApis"
+              :key="'today-' + index"
+              class="ranking-item"
+            >
+              <span class="index">{{ index + 1 }}</span>
+              <span class="name">{{ item.name }}</span>
+              <span class="count">{{ item.count }} 次</span>
+            </div>
+          </div>
+        </el-card>
 
-      <h1 class="section-title">可用 API 接口</h1>
+        <el-card class="ranking-card">
+          <template #header>
+            <div class="card-header">
+              <span>历史调用最多</span>
+            </div>
+          </template>
+          <div v-if="topAllTimeApis.length === 0" class="no-data">暂无数据</div>
+          <div v-else class="ranking-list">
+            <div
+              v-for="(item, index) in topAllTimeApis"
+              :key="'alltime-' + index"
+              class="ranking-item"
+            >
+              <span class="index">{{ index + 1 }}</span>
+              <span class="name">{{ item.name }}</span>
+              <span class="count">{{ item.count }} 次</span>
+            </div>
+          </div>
+        </el-card>
+      </div>
+
+      <h2 class="section-title">可用 API 接口</h2>
+      <!-- ========== 搜索和分页工具栏 ========== -->
+      <div class="toolbar">
+        <el-input
+          v-model="searchQuery"
+          placeholder="按名称或描述搜索..."
+          clearable
+          style="width: 300px;"
+          @input="handleSearchInput"
+        />
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[6, 12, 24, 48]"
+          :background="true"
+          layout="sizes, prev, pager, next"
+          :total="filteredApiList.length"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+
       <div class="api-cards">
-        <div
-          v-for="api in apiList"
-          :key="api.id"
-          class="api-card"
-          @click="openDetail(api)"
-        >
+        <div v-for="api in paginatedApiList" :key="api.id" class="api-card" @click="openDetail(api)">
           <div class="card-header">
             <h3 class="api-name">{{ api.apiName }}</h3>
             <el-tag size="small" :type="getTagType(api.status)">
@@ -81,17 +150,21 @@
           </p>
           <div class="card-footer">
             <span class="category">{{ api.apiCategory }}</span>
+            <!-- 🔥 显示额度费用 -->
+            <el-tag size="small" type="info" class="cost-tag">
+              额度: {{ api.creditCost }}
+            </el-tag>
             <span class="version">{{ api.version }}</span>
           </div>
         </div>
 
-        <div v-if="apiList.length === 0 && !loading" class="empty-state">
-          暂无可用 API
+        <div v-if="paginatedApiList.length === 0 && !loading" class="empty-state">
+          未找到匹配的 API
         </div>
       </div>
     </div>
 
-    <!-- 详情弹窗（保持不变） -->
+    <!-- 详情弹窗 -->
     <el-dialog
       v-model="dialogVisible"
       :title="detail.apiName || 'API 详情'"
@@ -99,7 +172,7 @@
       append-to-body
       class="api-detail-dialog"
     >
-      <!-- 弹窗内容保持不变 -->
+      <!-- 弹窗内容 -->
       <div class="detail-layout" v-if="detail.id">
         <div class="detail-left">
           <div class="detail-content">
@@ -122,8 +195,8 @@
               </el-tag>
             </div>
             <div class="detail-item">
-              <label>后端地址</label>
-              <span class="code">{{ detail.backendUrl }}</span>
+              <label>网关地址</label>
+              <span class="code">{{ detail.gatewayUrl  }}</span>
             </div>
             <div class="detail-item">
               <label>分类</label>
@@ -142,6 +215,12 @@
             <div class="detail-item">
               <label>频率限制</label>
               <span>{{ detail.rateLimit || '无限制' }}</span>
+            </div>
+            <!-- 🔥 额度费用 -->
+            <div class="detail-item">
+              <label>额度费用</label>
+
+                {{ detail.creditCost }} 额度/次
             </div>
             <div class="detail-item">
               <label>状态</label>
@@ -191,20 +270,90 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '~/store/index'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
-import { getAllApis, getApisTotal } from '../api/apis'
+import { getAllApis, getApisTotal,getTopTodayApis, getTopAllTimeApis } from '../api/apis'
 import { toast } from '../composables/util'
 import AppHeader from '../components/AppHeader.vue'
 import { DataAnalysis, Lock, Lightning, Document } from '@element-plus/icons-vue'
 
-// === 状态（必须先声明）===
+// === 状态 ===
 const userStore = useUserStore()
 const apiList = ref([])
-const totalCalls = ref(0) // 总调用次数
+const totalCalls = ref(0)
 const loading = ref(false)
 const dialogVisible = ref(false)
 const detail = ref({})
 const showExample = ref(false)
 const exampleType = ref('response')
+
+// 状态管理
+const searchQuery = ref('')
+const currentPage = ref(1)
+const pageSize = ref(6)
+const topTodayApis = ref([])
+const topAllTimeApis = ref([])
+
+// === 计算属性 ===
+// --- 🔥 修改：stats 计算属性，现在包含基于 reviewStatus 的 pendingReview 计算 ---
+const stats = computed(() => {
+  const list = apiList.value
+  const totalApis = list.length
+  const activeApis = list.filter(api => api.status === 'active').length
+  const inactiveApis = totalApis - activeApis
+  const totalCallCount = totalCalls.value
+
+  // 计算待审核 API 数量：reviewStatus 为 0 表示待审核
+  const pendingReview = list.filter(api => api.reviewStatus === 0).length
+
+  return {
+    totalApis,
+    totalCalls: totalCallCount,
+    activeApis,
+    inactiveApis,
+    pendingReview, // 将计算结果包含在返回对象中
+  }
+})
+
+const filteredApiList = computed(() => {
+  const query = searchQuery.value.toLowerCase();
+  // 🔥 过滤逻辑：只显示 reviewStatus 为 1 (已审核) 且符合搜索条件的API
+  return apiList.value.filter(api => 
+    api.reviewStatus === 1 && 
+    (api.apiName.toLowerCase().includes(query) || 
+     api.description.toLowerCase().includes(query))
+  )
+})
+
+const paginatedApiList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return filteredApiList.value.slice(start, end);
+});
+
+// === 数据转换 ===
+const transformApi = (raw) => {
+  return {
+    id: raw.id,
+    apiIdentifier: String(raw.id),
+    apiName: raw.name,
+    description: raw.description,
+    breakpointPath: raw.endpoint,
+    method: METHOD_MAP[raw.method] || 'GET',
+    backendUrl: raw.upstreamUrl, // 为了保持向后兼容性，如果你想在其他地方用这个字段，可以保留它，但详情页已不用
+    gatewayUrl: raw.gatewayUrl, // 新增或直接用于模板
+    apiCategory: raw.category || '未分类',
+    version: raw.version,
+    isPublic: raw.isPublic,
+    rateLimit: raw.rateLimit ? `${raw.rateLimit}/分钟` : '无限制',
+    creditCost: raw.creditCost || 0,
+    status: raw.status ? 'active' : 'inactive',
+    createTime: raw.createdAt,
+    updateTime: raw.updatedAt,
+    creatorId: raw.createdBy,
+    curlExample: raw.curlExample || '',
+    responseExample: raw.responseExample || '{}',
+    reviewStatus: raw.reviewStatus || 0 // 0: 待审核, 1: 已审核
+  }
+}
 
 // === 方法映射 ===
 const METHOD_MAP = {
@@ -217,30 +366,7 @@ const METHOD_MAP = {
   '6': 'HEAD'
 }
 
-// === 数据转换 ===
-const transformApi = (raw) => {
-  return {
-    id: raw.id,
-    apiIdentifier: String(raw.id),
-    apiName: raw.name,
-    description: raw.description,
-    breakpointPath: raw.endpoint,
-    method: METHOD_MAP[raw.method] || 'GET',
-    backendUrl: raw.upstreamUrl,
-    apiCategory: raw.category || '未分类',
-    version: raw.version,
-    isPublic: raw.isPublic,
-    rateLimit: raw.rateLimit ? `${raw.rateLimit}/分钟` : '无限制',
-    status: raw.status ? 'active' : 'inactive',
-    createTime: raw.createdAt,
-    updateTime: raw.updatedAt,
-    creatorId: raw.createdBy,
-    curlExample: raw.curlExample || '',
-    responseExample: raw.responseExample || '{}'
-  }
-}
-
-// === 获取 API 列表 ===
+// === 数据获取 ===
 const fetchApiList = async () => {
   loading.value = true
   try {
@@ -254,7 +380,6 @@ const fetchApiList = async () => {
   }
 }
 
-// === 获取总调用次数 ===
 const fetchTotalCalls = async () => {
   try {
     const res = await getApisTotal()
@@ -265,6 +390,27 @@ const fetchTotalCalls = async () => {
   }
 }
 
+// 🔥 模拟排行榜数据
+const fetchTopApis = async () => {
+  try {
+    const [todayRes, allTimeRes] = await Promise.all([
+      getTopTodayApis(), 
+      getTopAllTimeApis()
+    ]);
+ // 将 api_name 映射为 name
+    topTodayApis.value = (todayRes.data || []).map(item => ({
+      name: item.api_name,
+      count: item.count
+    }));
+    topAllTimeApis.value = (allTimeRes.data || []).map(item => ({
+      name: item.api_name,
+      count: item.count
+    }));
+  } catch (error) {
+    console.error('获取排行榜数据失败', error);
+    ElMessage.error('获取排行榜失败');
+  }
+};
 // === 详情弹窗 ===
 const openDetail = (api) => {
   detail.value = { ...api }
@@ -272,32 +418,6 @@ const openDetail = (api) => {
   showExample.value = false
 }
 
-// ✅ 修复：stats 计算属性（关键！）
-const stats = computed(() => {
-  const list = apiList.value
-  const totalApis = list.length // API 总数 = 列表长度
-  const activeApis = list.filter(api => api.status === 'active').length
-  const inactiveApis = totalApis - activeApis
-  
-  // 使用 totalCalls ref 的值
-  const totalCallCount = totalCalls.value
-
-  return {
-    totalApis,
-    totalCalls: totalCallCount, // 避免变量名冲突
-    activeApis,
-    inactiveApis
-  }
-})
-
-// ✅ 修复：安全的数字格式化
-const formatNumber = (num) => {
-  if (num == null || num === '') return '0'
-  const number = typeof num === 'string' ? parseFloat(num) : num
-  return isNaN(number) ? '0' : number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
-
-// === 其他方法（保持不变）===
 const currentExample = computed(() => {
   if (exampleType.value === 'request') {
     return detail.value.curlExample || '# 未提供 Curl 请求示例'
@@ -313,22 +433,13 @@ const currentExample = computed(() => {
   }
 })
 
-const showRequestExample = () => {
-  exampleType.value = 'request'
-  showExample.value = true
-}
-
-const showResponseExample = () => {
-  exampleType.value = 'response'
-  showExample.value = true
-}
-
-const copyExample = async () => {
-  await navigator.clipboard.writeText(currentExample.value)
-  ElMessage.success('已复制到剪贴板')
-}
-
 // === 工具函数 ===
+const formatNumber = (num) => {
+  if (num == null || num === '') return '0'
+  const number = typeof num === 'string' ? parseFloat(num) : num
+  return isNaN(number) ? '0' : number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
 const formatDate = (date) => {
   return date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '—'
 }
@@ -347,19 +458,35 @@ const getMethodTagType = (method) => {
   return map[method] || 'info'
 }
 
+// 分页和搜索
+const handleSearchInput = () => {
+  currentPage.value = 1;
+};
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  currentPage.value = 1;
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+};
+
 // === 初始化 ===
-onMounted(() => {
-  fetchApiList()
-  fetchTotalCalls()
+onMounted(async () => {
+  await Promise.allSettled([
+    fetchApiList(),
+    fetchTotalCalls(),
+    fetchTopApis(),
+  ]);
 })
 </script>
 
 <style scoped>
 /* ========== 整体页面 ========== */
 .api-list-page {
-  background: #ffffff; /* 与首页、个人中心一致 */
+  background: #ffffff;
   min-height: 100vh;
-
 }
 
 /* ========== 容器 ========== */
@@ -438,6 +565,10 @@ onMounted(() => {
   color: #9ca3af;
 }
 
+.cost-tag {
+  margin: 0 8px;
+}
+
 .empty-state {
   text-align: center;
   color: #9ca3af;
@@ -446,8 +577,7 @@ onMounted(() => {
   padding: 40px;
 }
 
-/* ========== 弹窗（保持原有样式）========== */
-/* 注意：弹窗样式已很专业，无需大改 */
+/* ========== 弹窗样式 ========== */
 .detail-content {
   display: flex;
   flex-direction: column;
@@ -547,7 +677,6 @@ onMounted(() => {
   }
 }
 
-
 /* ========== 数据概览卡片 ========== */
 .stats-cards {
   display: grid;
@@ -592,7 +721,13 @@ onMounted(() => {
 
 .stat-icon.danger {
   background-color: #fef2f2;
-  colorful: #dc2626;
+  color: #dc2626;
+}
+
+/* 🔥 警告颜色图标样式 */
+.stat-icon.warning {
+  background-color: #fffbeb;
+  color: #f59e0b;
 }
 
 .stat-info {
@@ -610,5 +745,90 @@ onMounted(() => {
   font-size: 14px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+/* ========== 排行榜 ========== */
+.rankings-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.ranking-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.card-header {
+  font-weight: bold;
+  color: #374151;
+}
+
+.no-data {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 20px;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+.index {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.name {
+  flex: 1;
+  margin: 0 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.count {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ========== 搜索和分页工具栏 ========== */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

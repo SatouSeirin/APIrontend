@@ -9,7 +9,6 @@
         <a href="/#apis">API列表</a>
         <a href="/#rechargeCenter">充值中心</a>
         <a href="/#workbench">工作台</a>
-        <a href="/#agreement">用户协议</a> <!-- 添加协议链接 -->
         <template v-if="!isLoggedIn">
           <el-button type="primary" size="small" @click="handleLogin">登录</el-button>
           <el-button size="small" @click="handleRegister">注册</el-button>

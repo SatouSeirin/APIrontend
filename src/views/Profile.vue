@@ -1,4 +1,3 @@
-<!-- src/views/Profile.vue -->
 <template>
   <div class="profile-page">
     <!-- 顶部导航（使用公共组件） -->
@@ -39,40 +38,40 @@
         <div class="card-title">API 调用日志</div>
 
         <!-- ========== 新增：搜索表单 ========== -->
-  <div class="log-search">
-    <el-form :model="searchForm" inline>
-      <el-form-item label="时间范围">
-        <el-date-picker
-          v-model="searchForm.dateRange"
-          type="datetimerange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          format="YYYY-MM-DD HH:mm"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          :shortcuts="shortcuts"
-        />
-      </el-form-item>
+        <div class="log-search">
+          <el-form :model="searchForm" inline>
+            <el-form-item label="时间范围">
+              <el-date-picker
+                v-model="searchForm.dateRange"
+                type="datetimerange"
+                range-separator="至"
+                start-placeholder="开始时间"
+                end-placeholder="结束时间"
+                format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                :shortcuts="shortcuts"
+              />
+            </el-form-item>
 
-      <el-form-item label="状态码" class="status-select-item">
-        <el-select v-model="searchForm.status" placeholder="全部" clearable popper-class="status-select-popper">
-          <el-option label="2xx" value="2" />
-          <el-option label="4xx" value="4" />
-          <el-option label="5xx" value="5" />
-          <el-option :label="code" :value="code" v-for="code in [200, 400, 401, 403, 404, 500]" :key="code" />
-        </el-select>
-      </el-form-item>
+            <el-form-item label="状态码" class="status-select-item">
+              <el-select v-model="searchForm.status" placeholder="全部" clearable popper-class="status-select-popper">
+                <el-option label="2xx" value="2" />
+                <el-option label="4xx" value="4" />
+                <el-option label="5xx" value="5" />
+                <el-option :label="code" :value="code" v-for="code in [200, 400, 401, 403, 404, 500]" :key="code" />
+              </el-select>
+            </el-form-item>
 
-      <el-form-item label="URL">
-        <el-input v-model="searchForm.url" placeholder="关键词" clearable />
-      </el-form-item>
+            <el-form-item label="URL">
+              <el-input v-model="searchForm.url" placeholder="关键词" clearable />
+            </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </el-form-item>
-    </el-form>
-  </div>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">搜索</el-button>
+              <el-button @click="handleReset">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
 
         <!-- 加载中 -->
         <div v-if="loading" class="log-placeholder">
@@ -103,6 +102,8 @@
                 <span>耗时: {{ log.latency }}ms</span>
                 <span>IP: {{ log.ipAddress }}</span>
                 <span>{{ formatDate(log.createdAt) }}</span>
+                <!-- 新增：显示 credit_cost -->
+                <span>额度消耗: <b>{{ log.creditCost }} 点</b></span>
               </div>
             </div>
           </div>
@@ -128,12 +129,10 @@
 import { onMounted, ref, computed } from 'vue'
 import { Key, Bell, Loading, Coin, Document } from '@element-plus/icons-vue'
 import { useUserStore } from '~/store/index'
-import { getApiLogs,getUserTotalCalls } from '~/api/apis'
+import { getApiLogs, getUserTotalCalls } from '~/api/apis'
 import AppHeader from '../components/AppHeader.vue'
 
 const userStore = useUserStore()
-
-
 
 // === 日志状态 ===
 const logs = ref([])
@@ -141,8 +140,7 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
-const userTotalCalls = ref(0);
-
+const userTotalCalls = ref(0)
 
 // ===== 新增：搜索状态 =====
 const searchForm = ref({
@@ -199,15 +197,13 @@ const fetchLogs = async (page = 1) => {
 // 在 fetchLogs 附近添加
 const fetchUserTotalCalls = async () => {
   try {
-    const res = await getUserTotalCalls();
-    console.log(res)
-    userTotalCalls.value = res.data || 0;
+    const res = await getUserTotalCalls()
+    userTotalCalls.value = res.data || 0
   } catch (error) {
-    console.error('获取用户调用次数失败:', error);
-    userTotalCalls.value = 0;
+    console.error('获取用户调用次数失败:', error)
+    userTotalCalls.value = 0
   }
-};
-
+}
 
 // ===== 搜索和重置 =====
 const handleSearch = () => {
@@ -244,7 +240,7 @@ const stats = computed(() => [
   },
   {
     label: '用户调用总数',
-    value: userTotalCalls.value || '—', // ← 关键修改
+    value: userTotalCalls.value || '—',
     icon: Document
   },
   {
@@ -264,8 +260,7 @@ const stats = computed(() => [
 
 // === 初始化 ===
 onMounted(() => {
-
-  fetchUserTotalCalls();
+  fetchUserTotalCalls()
   fetchLogs(1)
 })
 </script>

@@ -5,10 +5,10 @@ export function getAllApis(){
 }
 
 export function getApisByUser(){
-  return axios.get("/api/api/apisByUser")
+  return axios.get("/api/api/getApisByUser")
 }
 
-// 修正：改为 POST 请求，并传递 API 数据
+
 export function insertApi(apiData) {
   return axios.post("/api/api/insertApi", apiData);
 }
@@ -31,4 +31,42 @@ export function getUserTotalCalls() {
   return axios.get('/api/api/totalUser');
 
 }
+
+
+export function deleteApiById(id) {
+  return axios.delete(`/api/api/deleteApi/${id}`);
+}
+
+
+
+export function updateApi(id, apiData) {
+  return axios.put(`/api/api/updateApi/${id}`, apiData);
+}
+
+export function getCallTrendData(timeRange) {
+  return axios.get('/api/api/calls-trend', {
+    params: {
+      timeRange
+    }
+  })
+}
+
+export function getApiDistributionData() {
+  return axios.get('/api/api/api-distribution');
+}
+
+
+export function getTopTodayApis() {
+  return axios.get('/api/api/top-today');
+}
+
+
+export function getTopAllTimeApis() {
+  return axios.get('/api/api/top-all-time');
+}
+
+export function getTotalIncome () {
+  return axios.get('/api/api/total-income')
+}
+
 

@@ -185,6 +185,9 @@ const sendRequest = async () => {
       headers: {}
     }
 
+        // 🔥 新增：明确告知服务器我们期望接收 JSON 格式的数据
+    config.headers['Accept'] = 'application/json'
+
     // 添加 Headers
     headers.value.forEach(h => {
       if (h.key && h.value) {
@@ -219,7 +222,19 @@ const sendRequest = async () => {
 
     // 发送请求
     const res = await fetch(url.value, config)
-    const data = await res.text()
+
+       // 🔥 修改：使用 TextDecoder 强制以 UTF-8 解码响应体
+    const buffer = await res.arrayBuffer(); // 获取原始字节数组
+    const decoder = new TextDecoder('utf-8'); // 创建 UTF-8 解码器
+    const data = decoder.decode(buffer); // 解码为字符串
+
+    // 尝试解析为 JSON，如果失败则保持原样
+    try {
+      const parsedData = JSON.parse(data);
+      data = JSON.stringify(parsedData, null, 2); // 格式化输出
+    } catch (e) {
+      // 如果不是 JSON，则保留原始字符串
+    }
 
     // 记录响应
     response.value = {

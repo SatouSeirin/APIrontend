@@ -27,7 +27,7 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: Home,
-      meta: { title: '甜蜜接口API平台' }
+      meta: { title: '接口API平台' }
     },
     // ... 其他路由 ...
 
@@ -36,26 +36,26 @@ const router = createRouter({
       path: '/apis',
       name: 'ApiList',
       component: ApiList,
-      meta: { title: 'API 接口大全' }
+      meta: { title: 'API 接口大全', requiresAuth: true }
     },
     // 个人中心相关
     {
       path: '/profile',
       name: 'Profile',
       component: Profile,
-      meta: { title: '个人中心' }
+      meta: { title: '个人中心' , requiresAuth: true}
     },
     {
       path: '/workbench',
       name: 'Workbench',
       component: Workbench,
-      meta: { title: '工作台' }
+      meta: { title: '工作台', requiresAuth: true }
     },
     {
       path: '/rechargeCenter',
       name: 'RechargeCenter',
       component: RechargeCenter,
-      meta: { title: '充值中心' } // 修正标题
+      meta: { title: '充值中心', requiresAuth: true } // 修正标题
     },
 
     // 新增：用户协议页面
@@ -63,7 +63,7 @@ const router = createRouter({
       path: '/agreement',
       name: 'Agreement',
       component: Agreement,
-      meta: { title: '用户协议' } // 需要登录才能访问协议页
+      meta: { title: '用户协议', requiresAuth: true } // 需要登录才能访问协议页
     },
     // 新增：开发者后台页面
     {

@@ -1,6 +1,6 @@
 // src/permission.js
 import { getToken } from "./composables/auth"
-import { toast , showFullLoading, hideFullLoading} from "./composables/util"
+import { toast, showFullLoading, hideFullLoading } from "./composables/util"
 import router from "./router/index"
 
 // 全局前置守卫
@@ -18,19 +18,17 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // --- 新增：检查是否需要登录 ---
-  const requiresAuth = to.meta.requiresAuth;
+  // --- 检查是否需要登录 ---
+  const requiresAuth = to.meta.requiresAuth
   
-  // 如果需要登录，但没有 token
   if (requiresAuth && !token) {
     toast("请先登录", "error")
     return next({ path: "/auth/login" })
   }
 
-  // 如果不需要登录且没有 token，也允许访问（例如首页）
   if (!requiresAuth && !token) {
-     next();
-     return;
+     next()
+     return
   }
 
   // 防止重复登录
@@ -54,53 +52,50 @@ router.beforeEach(async (to, from, next) => {
         }
       } catch (error) {
         console.error('自动获取用户信息失败:', error)
-        // 获取失败后，可以选择跳转到登录页或清空无效token
-        // 这里暂时不清空，避免无限循环，但可以给出提示
-        toast('用户信息失效，请重新登录', 'error');
-        return next({ path: "/auth/login" });
+        toast('用户信息失效，请重新登录', 'error')
+        return next({ path: "/auth/login" })
       }
     }
 
-    // --- 修改：角色权限检查 (管理员可以访问开发者页面) ---
-    const requiredRole = to.meta.requiresRole;
-    console.log("--- 权限检查 Debug Info ---");
-    console.log("目标路由需要的角色:", requiredRole);
-    console.log("当前用户信息:", userStore.userInfo);
-    if(userStore.userInfo) {
-      console.log("当前用户角色 (原始):", userStore.userInfo.role);
-      console.log("当前用户角色 (转换为数字):", Number(userStore.userInfo.role));
-      console.log("用户角色类型:", typeof userStore.userInfo.role);
-    }
-    console.log("目标路由信息:", to);
-    console.log("--------------------------");
-
+    // --- 🔥 修改：角色权限检查逻辑 ---
+    const requiredRole = to.meta.requiresRole
+    
     if (requiredRole && userStore.userInfo) {
-      let hasRequiredRole = false;
-      const userRole = Number(userStore.userInfo.role);
+      const userRole = Number(userStore.userInfo.role)
+      let hasRequiredRole = false
 
       if (requiredRole === 'developer') {
-        hasRequiredRole = userRole === 1 || userRole === 2;
-      } else if (requiredRole === 'admin') {
-        hasRequiredRole = userRole === 2;
+        // ✅ 开发者权限：角色 1 或 2 可直接访问
+        if (userRole === 1 || userRole === 2) {
+          hasRequiredRole = true
+        }
+        // 🔄 角色 0 尝试访问开发者后台 → 重定向到协议页
+        else if (userRole === 0) {
+          toast('请先同意开发者协议', 'warning')
+          return next({ name: 'Agreement', query: { redirect: to.fullPath } })
+        }
+      } 
+      else if (requiredRole === 'admin') {
+        // ✅ 管理员权限：仅角色 2 可访问
+        hasRequiredRole = userRole === 2
       }
-
-      console.log("最终权限判断结果:", hasRequiredRole);
 
       if (!hasRequiredRole) {
-        toast('权限不足，无法访问此页面', 'error');
+        toast('权限不足，无法访问此页面', 'error')
+        // 根据当前角色跳转到合适的页面
         if (userRole === 1) {
-          next({ name: 'DeveloperConsole' })
+          return next({ name: 'DeveloperConsole' })
         } else if (userRole === 2) {
-          next({ name: 'AdminPanel' })
+          return next({ name: 'AdminPanel' })
         } else {
-          next({ name: 'Home' })
+          return next({ name: 'Home' })
         }
-        return;
       }
     }
-    // --- 修改：角色权限检查 结束 ---
+    // --- 权限检查结束 ---
   }
 
+  // 设置页面标题
   let title = (to.meta.title || "") + "-Api对接平台"
   document.title = title
 
